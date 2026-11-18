@@ -1,0 +1,241 @@
+@import '@fontsource/saira/400.css';
+@import '@fontsource/saira/600.css';
+@import '@fontsource/saira-semi-condensed/600.css';
+
+/* Graybox UI – final look in Phase 7 (05-overlay-ui.png, 08-start-screen.png). */
+
+.hud,
+.overlay {
+  font-family: 'Saira', system-ui, sans-serif;
+  color: var(--ui-text);
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hud button,
+.overlay button,
+.overlay a {
+  pointer-events: auto;
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+/* Language switch, top left */
+.hud-lang {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: var(--ui-panel);
+  border: 1px solid rgba(62, 242, 230, 0.45);
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+.hud-lang-sep {
+  opacity: 0.5;
+  padding: 0 2px;
+}
+
+.hud-lang-btn {
+  background: none;
+  border: 0;
+  color: rgba(230, 251, 255, 0.6);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.hud-lang-btn[aria-pressed='true'] {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 8px rgba(62, 242, 230, 0.7);
+}
+
+/* Interaction prompt */
+.hud-prompt {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--ui-panel);
+  border: 1px solid var(--accent, var(--neon-cyan));
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.hud-prompt-title {
+  opacity: 0.75;
+  padding-left: 8px;
+  border-left: 1px solid rgba(230, 251, 255, 0.3);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.35em;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+/* Hints, bottom */
+.hud-hints {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 0.85rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.hud-hints p {
+  margin: 4px 0;
+}
+
+/* Project overlay, right half */
+.overlay {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: min(560px, calc(50vw - 24px));
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: var(--ui-panel);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--accent, var(--neon-cyan));
+  box-shadow: 0 0 24px rgba(62, 242, 230, 0.15);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  line-height: 1.5;
+}
+
+.overlay-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.overlay-title {
+  margin: 0;
+  font-family: 'Saira Semi Condensed', 'Saira', sans-serif;
+  font-weight: 600;
+  font-size: 1.6rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent, var(--neon-cyan));
+}
+
+.overlay-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--ui-text);
+  border: 1px solid rgba(230, 251, 255, 0.4);
+  cursor: pointer;
+}
+
+.overlay-close:hover {
+  border-color: var(--accent, var(--neon-cyan));
+}
+
+.overlay-media {
+  margin: 16px 0 12px;
+}
+
+.overlay-media img,
+.overlay-media video {
+  width: 100%;
+  display: block;
+  border: 1px solid rgba(62, 242, 230, 0.4);
+}
+
+.overlay-media-placeholder {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border: 1px dashed rgba(230, 251, 255, 0.4);
+  color: rgba(230, 251, 255, 0.6);
+}
+
+.overlay-summary {
+  font-weight: 600;
+}
+
+.overlay h3 {
+  margin: 18px 0 4px;
+  font-family: 'Saira Semi Condensed', 'Saira', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent, var(--neon-cyan));
+}
+
+.overlay-period {
+  opacity: 0.75;
+}
+
+.overlay-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.overlay-tags li {
+  padding: 1px 8px;
+  border: 1px solid rgba(62, 242, 230, 0.5);
+  font-size: 0.85rem;
+}
+
+.overlay-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.overlay-links a {
+  flex: 1;
+  padding: 8px 12px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--ui-text);
+  border: 1px solid var(--neon-cyan);
+}
+
+.overlay-links a.primary {
+  background: var(--neon-cyan);
+  color: #06212a;
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .overlay {
+    left: 16px;
+    width: auto;
+  }
+}

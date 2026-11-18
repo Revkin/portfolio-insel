@@ -12,6 +12,8 @@ export default defineConfig({
   preview: { port: 4173, strictPort: true },
   build: {
     target: 'es2022',
-    chunkSizeWarningLimit: 1500,
+    // Rapier ships its physics engine as inlined WASM (~2 MB). Code splitting
+    // and the load budget are handled in Phase 10.
+    chunkSizeWarningLimit: 4000,
   },
 });

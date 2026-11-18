@@ -1,31 +1,51 @@
 /**
- * Fixed camera positions for automated screenshots (`npm run screenshots`).
+ * Fixed views for automated screenshots (`npm run screenshots`).
  * The Playwright script opens the page with `?shot=<name>` and waits until
- * `window.__sceneReady` is true. New shots (day, dusk, night, portal close-up,
- * overlay, start screen) are added here as the corresponding phases land.
+ * `window.__sceneReady` is true. More shots (dusk, night, start screen) are
+ * added as the corresponding phases land.
  */
 export type Vec3 = [number, number, number];
 
-export interface Shot {
-  name: string;
-  camera: Vec3;
-  target: Vec3;
-  isScreenshot: boolean;
+export interface ShotConfig {
+  /** Fixed camera instead of the follow camera. */
+  fixedCamera?: { position: Vec3; target: Vec3 };
+  /** Where the player stands: path start or in front of portal N. */
+  player: 'spawn' | { portalIndex: number };
+  pitch?: number;
+  distance?: number;
+  /** Open the overlay of the portal the player stands at. */
+  openOverlay?: boolean;
 }
 
-const SHOTS: Record<string, Omit<Shot, 'name' | 'isScreenshot'>> = {
-  overview: { camera: [0, 120, 230], target: [0, 0, 0] },
-};
+export const SHOTS = {
+  overview: {
+    fixedCamera: { position: [10, 95, 175], target: [0, 0, -5] },
+    player: 'spawn',
+  },
+  gameplay: { player: 'spawn', pitch: -0.2, distance: 5.5 },
+  portal: { player: { portalIndex: 0 }, pitch: -0.18, distance: 6 },
+  overlay: { player: { portalIndex: 0 }, pitch: -0.18, distance: 6, openOverlay: true },
+} satisfies Record<string, ShotConfig>;
 
-export function getShot(): Shot {
+export type ShotName = keyof typeof SHOTS;
+
+export function getShotFromUrl(): { name: ShotName; config: ShotConfig } | null {
   const requested = new URLSearchParams(window.location.search).get('shot');
-  const name = requested && requested in SHOTS ? requested : 'overview';
-  const preset = SHOTS[name] ?? { camera: [0, 120, 230], target: [0, 0, 0] };
-  return { name, ...preset, isScreenshot: requested !== null };
+  if (requested && requested in SHOTS) {
+    const name = requested as ShotName;
+    return { name, config: SHOTS[name] };
+  }
+  return null;
+}
+
+export function isDebugMode(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.has('debug') || params.has('shot');
 }
 
 declare global {
   interface Window {
     __sceneReady?: boolean;
+    __debug?: unknown;
   }
 }
