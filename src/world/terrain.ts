@@ -4,6 +4,7 @@ import {
   ISLAND_RADIUS_X,
   ISLAND_RADIUS_Z,
   PATH_HALF_WIDTH,
+  SEA_LEVEL,
   WINDMILL_POSITION,
   creekSamples,
   pathSamples,
@@ -41,12 +42,18 @@ export function baseHeight(x: number, z: number): number {
 
   // Hill in the north with the windmill.
   h += land * 9 * Math.exp(-(((x - WINDMILL_POSITION.x) / 30) ** 2 + ((z - WINDMILL_POSITION.z) / 22) ** 2));
-  // Raised, rocky ground in the west with a peak for climbing and gliding.
+  // Raised, rocky ground in the west.
   h += land * west * 4.5;
-  h += land * 9 * Math.exp(-(((x + 78) / 14) ** 2 + ((z + 22) / 16) ** 2));
   h += land * west * (fbm(x * 0.08, z * 0.08, 3) - 0.5) * 3;
+
+  // Rock mesa with steep, climbable walls and a flat top to glide from.
+  const dm = Math.hypot(x - CLIMB_ROCK.x, (z - CLIMB_ROCK.z) * 1.15);
+  h += land * CLIMB_ROCK.height * smoothstep(CLIMB_ROCK.radius + 3, CLIMB_ROCK.radius - 1, dm);
   return h;
 }
+
+/** Climbing rock in the west (SPEC 4.4: high enough to climb and glide). */
+export const CLIMB_ROCK = { x: -74, z: -26, radius: 10, height: 9 } as const;
 
 export interface TerrainData {
   nx: number;
@@ -190,6 +197,19 @@ export function sampleHeight(x: number, z: number): number {
   const h = t.heights;
   const i = iz * t.nx + ix;
   return lerp(lerp(h[i]!, h[i + 1]!, fx), lerp(h[i + t.nx]!, h[i + t.nx + 1]!, fx), fz);
+}
+
+/**
+ * Water surface at (x, z): the creek level inside the creek channel, else the
+ * sea level. Callers compare it with the ground/feet height.
+ */
+export function waterSurfaceAt(x: number, z: number): number {
+  const t = getTerrain();
+  const onCreek = nearestOnPolyline(t.creek, x, z, CREEK_HALF_WIDTH);
+  if (onCreek.dist < CREEK_HALF_WIDTH && onCreek.index <= t.creekEnd) {
+    return Math.max(sampleArray(t.creekWater, onCreek.index), SEA_LEVEL);
+  }
+  return SEA_LEVEL;
 }
 
 /** Height of the walkable path surface at a fractional path sample index. */

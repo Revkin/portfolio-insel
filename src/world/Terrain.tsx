@@ -81,7 +81,8 @@ export function Terrain() {
   const { geometry, positions, indices } = useMemo(() => buildGeometry(), []);
 
   return (
-    <RigidBody type="fixed" colliders={false}>
+    // Steep terrain is climbable (the slope check happens in the player's locomotion).
+    <RigidBody type="fixed" colliders={false} userData={{ climbable: true }}>
       <TrimeshCollider args={[positions, indices]} />
       <mesh geometry={geometry} receiveShadow castShadow>
         <meshStandardMaterial vertexColors roughness={0.95} metalness={0} />
