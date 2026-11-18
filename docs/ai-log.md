@@ -54,3 +54,37 @@ Pro Session: was gebaut wurde, was gut lief, was schwierig war und wo Kevin eing
 
 **Kevin musste eingreifen**
 - Nichts in dieser Phase.
+
+**Kevins Feedback zur Graybox**
+- „Funktioniert alles super“, nur ein Sprint fehlte. Der kommt mit Phase 2.
+- Bestätigt: Claude Code läuft in einer VM ohne Grafikkarte. Kevin prüft Optik und Performance auf seinem eigenen Rechner und kann ab Phase 4 Screenshots beisteuern.
+
+---
+
+## 2026-11-18 – Phase 2: Bewegung
+
+**Gebaut**
+- Eigene Zustandsmaschine `player/locomotion.ts` mit den Modi Boden, Luft, Gleiten, Schwimmen, Klettern und Hochziehen. Grundlage ist weiterhin der kinematische Character Controller von Rapier.
+- **Sprint und Ausdauer:** Shift sprintet (8 statt 4,5 m/s). Sprint, Klettern, Klettersprung und schnelles Schwimmen verbrauchen Ausdauer, die sich nur am Boden regeneriert. Ist sie leer, ist man erschöpft und kann erst ab 30 % wieder sprinten. Die schlanke Ausdauerleiste erscheint nur bei Verbrauch.
+- **Schwimmen:** Ab ausreichender Wassertiefe treibt man an der Oberfläche, mit Shift schneller. Eine weiche unsichtbare Grenze kurz hinter der Küste führt sanft zurück.
+- **Gleiten:** Leertaste in der Luft öffnet den Gleiter, erneut gedrückt schließt sie ihn. Man gleitet mit etwa 8,5 m/s vorwärts, sinkt nur langsam und lenkt mit WASD. Der Gleiter ist vorerst ein Platzhalter-Dreieck mit Neon-Kanten.
+- **Klettern:** Läuft man gegen einen steilen, als kletterbar markierten Hang, beginnt das Klettern. W/A/S/D bewegen entlang der Wand, Leertaste macht einen Klettersprung, S + Leertaste stößt von der Wand ab. Oben zieht man sich über die Kante hoch. Bei leerer Ausdauer fällt man und kann sich erst nach der Landung wieder festhalten.
+- Neuer Tafelfels im Westen (9 m hoch, steile Wände, flaches Plateau) zum Klettern und Abgleiten.
+- **Kamera-Kollision:** Ein Strahl vom Kopf zur Kamera holt die Kamera sofort heran, wenn etwas im Weg ist, und lässt sie danach sanft wieder zurückfahren.
+- Smoke-Test um 27 Bewegungsprüfungen erweitert. Gemessen wird in Spielzeit statt Echtzeit.
+
+**Gut gelaufen**
+- Die detaillierten Protokolle pro Bild haben echte Fehler schnell sichtbar gemacht:
+  - Die Korrektur, die die Kapsel an die Wand heranzieht, wirkte entlang der schrägen Wandnormale und drückte sie dadurch nach unten. Am Wandfuß blieb die Kapsel deshalb fast stehen. Jetzt wirkt die Korrektur nur waagerecht.
+  - Im Klettermodus hält der Character Controller die Wand selbst für „Boden“, weil er dort auf 89° eingestellt ist. S schaltete deshalb sofort aufs Laufen um. Jetzt erkennt ein Strahl nach unten, ob man wirklich unten angekommen ist.
+  - Der Schwimmer schleifte über flache Sandbänke. Ob man schwimmt, richtet sich jetzt nach der Wassertiefe bis zum Grund statt nach der Tiefe an den Füßen.
+
+**Schwierig**
+- Software-Rendering in der VM: Die Bildrate schwankt je nach Blickwinkel stark. Weil das Spiel pro Bild höchstens 1/20 s rechnet, läuft dann alles in Zeitlupe. Tests mit Echtzeit-Messungen waren deshalb unzuverlässig. Lösung: ein Spielzeit-Zähler in der Debug-Schnittstelle, und alle Tests messen in Spielzeit.
+- Mehrere fehlgeschlagene Tests lagen am Testszenario, nicht am Spiel:
+  - Der Startpunkt westlich des Felsens lag schon an der Meeresklippe.
+  - Direkt an der Kante löst die Leertaste den Coyote-Sprung aus, nicht den Gleiter.
+  - Ein sehr kurzer Sturz fiel zwischen zwei Abfragen des Tests durch.
+
+**Kevin musste eingreifen**
+- Nichts in dieser Phase.
