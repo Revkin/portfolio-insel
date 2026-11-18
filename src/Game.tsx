@@ -13,7 +13,7 @@ import { cameraRig, playerState, yawFromDirection } from './player/playerState.t
 import { initCameraInput } from './player/cameraInput.ts';
 import { Portals } from './portals/Portals.tsx';
 import { computePortalPlacements } from './portals/placement.ts';
-import { getTerrain } from './world/terrain.ts';
+import { CLIMB_ROCK, getTerrain, sampleHeight } from './world/terrain.ts';
 import { useGame } from './systems/store.ts';
 import { isDebugMode, type ShotConfig } from './systems/shots.ts';
 
@@ -99,7 +99,26 @@ function DebugHooks() {
     const placements = computePortalPlacements(PROJECTS.length);
     window.__debug = {
       portalCount: placements.length,
-      player: () => ({ ...playerState.position, grounded: playerState.grounded }),
+      player: () => ({
+        x: playerState.position.x,
+        y: playerState.position.y,
+        z: playerState.position.z,
+        grounded: playerState.grounded,
+        mode: playerState.mode,
+        stamina: playerState.stamina,
+        exhausted: playerState.exhausted,
+        time: playerState.time,
+      }),
+      camera: () => ({
+        effectiveDistance: cameraRig.effectiveDistance,
+        distance: cameraRig.distance,
+      }),
+      climbRock: () => ({ ...CLIMB_ROCK, top: sampleHeight(CLIMB_ROCK.x, CLIMB_ROCK.z) }),
+      setStamina: (value: number) => playerState.setStamina?.(value),
+      setCamera: (pitch: number, distance: number) => {
+        cameraRig.pitch = pitch;
+        cameraRig.distance = distance;
+      },
       teleport: (x: number, z: number, yaw?: number) => playerState.teleport?.(x, z, yaw),
       teleportToPortal: (i: number) => {
         const p = placements[i];
