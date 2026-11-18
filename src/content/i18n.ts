@@ -5,7 +5,9 @@ const de = {
   'app.loading': 'Insel wird geladen …',
   'hud.language': 'Sprache',
   'hud.clickToLook': 'Ins Bild klicken, um dich mit der Maus umzusehen',
-  'hud.controls': 'WASD bewegen · Leertaste springen · E öffnen · Mausrad Abstand · Esc Maus freigeben',
+  'hud.controls':
+    'WASD bewegen · Shift sprinten · Leertaste springen, in der Luft gleiten · gegen Felswand laufen: klettern · E öffnen · Esc Maus freigeben',
+  'hud.stamina': 'Ausdauer',
   'portal.open': 'Öffnen',
   'overlay.close': 'Schließen',
   'overlay.closeHint': 'Esc',
@@ -23,7 +25,9 @@ const en: Record<Key, string> = {
   'app.loading': 'Loading the island …',
   'hud.language': 'Language',
   'hud.clickToLook': 'Click into the scene to look around with the mouse',
-  'hud.controls': 'WASD move · Space jump · E open · Mouse wheel distance · Esc release mouse',
+  'hud.controls':
+    'WASD move · Shift sprint · Space jump, in mid-air glide · run into a rock wall: climb · E open · Esc release mouse',
+  'hud.stamina': 'Stamina',
   'portal.open': 'Open',
   'overlay.close': 'Close',
   'overlay.closeHint': 'Esc',

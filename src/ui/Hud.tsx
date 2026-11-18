@@ -4,6 +4,7 @@ import { getProject } from '../content/projects.ts';
 import { PROJECT_COLORS } from '../content/palette.ts';
 import { useGame } from '../systems/store.ts';
 import { useI18n } from '../systems/useI18n.ts';
+import { StaminaBar } from './StaminaBar.tsx';
 
 export function Hud() {
   const { lang, setLang, t } = useI18n();
@@ -48,6 +49,8 @@ export function Hud() {
           <span className="hud-prompt-title">{pick(near.title, lang)}</span>
         </div>
       )}
+
+      <StaminaBar />
 
       {openProjectId === null && (
         <div className="hud-hints">
