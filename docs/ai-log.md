@@ -23,4 +23,9 @@ Pro Session: was gebaut wurde, was gut lief, was schwierig war und wo Kevin eing
 - `npm audit` meldet ReDoS-Lücken in `picomatch`/`minimatch`. Die stecken nur in Build-Werkzeugen (Vite, ESLint) und landen nicht im Browser-Bundle. Für `picomatch` gibt es noch keinen Patch, für `minimatch` nur über einen Major-Sprung. Ich habe sie bewusst akzeptiert und behalte sie im Blick.
 
 **Kevin musste eingreifen**
-- Git-Installation freigeben, Commit-Identität festlegen, beim ersten Push bei GitHub anmelden.
+- Git-Installation freigeben, Commit-Identität festlegen (GitHub-noreply-Adresse).
+- Beim ersten Push im Browser bei GitHub anmelden. Aus Claudes nicht interaktiver Shell geht das nicht, deshalb lief der Push im Terminal-Panel. Der erste Versuch scheiterte, beim zweiten klappte es.
+
+**Abnahme Phase 0**
+- Workflow „Deploy to GitHub Pages“ lief grün (Typecheck, Lint, Build, Deploy).
+- https://revkin.github.io/portfolio-insel/ zeigt die Platzhalter-Szene ohne Konsolenfehler.
