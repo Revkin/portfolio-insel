@@ -23,6 +23,11 @@ export const SHOTS = {
     player: 'spawn',
   },
   gameplay: { player: 'spawn', pitch: -0.2, distance: 5.5 },
+  /** Climbing rock in the west (Phase 2). */
+  rock: {
+    fixedCamera: { position: [-38, 20, -2], target: [-74, 7, -26] },
+    player: 'spawn',
+  },
   portal: { player: { portalIndex: 0 }, pitch: -0.18, distance: 6 },
   overlay: { player: { portalIndex: 0 }, pitch: -0.18, distance: 6, openOverlay: true },
 } satisfies Record<string, ShotConfig>;

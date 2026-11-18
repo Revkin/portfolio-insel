@@ -1,23 +1,17 @@
 /**
- * End-to-end smoke test of the production build (Phase 1 acceptance):
- * walk across the island, open a portal with E, switch DE/EN, close with Esc.
+ * End-to-end smoke test of the production build:
+ * Phase 1 – walk across the island, open a portal with E, switch DE/EN, close with Esc.
+ * Phase 2 – sprint/stamina, swim, climb, glide, camera collision (movement-tests.ts).
  *
  *   npm run build && npm run test:smoke
+ *   npm run test:smoke -- movement      (only the movement part)
  */
 import type { Page } from 'playwright';
 import { waitForScene, withPreviewPage } from './browser.ts';
+import type { DebugWindow } from './debug-api.ts';
+import { runMovementTests } from './movement-tests.ts';
 
-interface DebugApi {
-  portalCount: number;
-  player: () => { x: number; y: number; z: number; grounded: boolean };
-  teleportToPortal: (i: number) => boolean;
-  teleport: (x: number, z: number, yaw?: number) => void;
-  setYaw: (yaw: number) => void;
-  pathPoints: () => { x: number; z: number }[];
-  state: () => { lang: string; nearPortalId: string | null; openProjectId: string | null };
-}
-
-type DebugWindow = Window & { __debug?: DebugApi };
+const only = process.argv[2];
 
 let failures = 0;
 function check(ok: boolean, label: string, detail = '') {
@@ -47,6 +41,13 @@ await withPreviewPage(async (page, baseUrl) => {
       }),
   );
   console.log(`Bildrate im Test-Browser: ${fps.toFixed(1)} fps`);
+
+  if (only === 'movement') {
+    console.log('\n— Bewegung (Phase 2) —');
+    await runMovementTests(page, check);
+    return;
+  }
+  console.log('\n— Welt, Portale, Overlay (Phase 1) —');
 
   const portalCount = await page.evaluate(() => (window as DebugWindow).__debug!.portalCount);
   check(portalCount === 5, 'Fünf Portale aus den Projektdaten', `${portalCount}`);
@@ -165,6 +166,9 @@ await withPreviewPage(async (page, baseUrl) => {
   await page.getByRole('button', { name: /Schließen/ }).click();
   await page.waitForTimeout(200);
   check(!(await overlay.isVisible()), 'Schließen-Button schließt das Overlay');
+
+  console.log('\n— Bewegung (Phase 2) —');
+  await runMovementTests(page, check);
 });
 
 console.log(failures === 0 ? '\nAlle Prüfungen bestanden.' : `\n${failures} Prüfung(en) fehlgeschlagen.`);
