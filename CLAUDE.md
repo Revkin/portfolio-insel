@@ -29,6 +29,7 @@ Begehbare 3D-Portfolio-Webseite von Kevin: eine Insel im Mix aus Fantasy-Open-Wo
 - `npm run typecheck` – `tsc --noEmit`
 - `npm run lint` – ESLint
 - `npm run screenshots` – Playwright-Skript, das Referenzansichten (Tag, Dämmerung, Nacht, Portal nah, Overlay offen, Startscreen) nach `docs/screenshots/` rendert
+- `npm run test:smoke` – Playwright-Smoke-Test des Builds (Laufen, Springen, ganzer Pfad, alle Portale, Overlay, DE/EN, Esc); vorher `npm run build`
 
 ## Projektstruktur
 ```
