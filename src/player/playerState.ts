@@ -15,6 +15,21 @@ export const playerState = {
   exhausted: false,
   /** Accumulated simulation time in seconds (tests measure speeds with it). */
   time: 0,
+  /** Current velocity (m/s), for animation blending. */
+  velocity: new Vector3(),
+  /** Distance moved along the wall, drives the climbing cycle. */
+  climbDistance: 0,
+  /** 0..1 progress of a pull-up over a ledge. */
+  mantleProgress: 0,
+  /**
+   * Screenshot/test override for the character animation state
+   * ('climb', 'glide', 'swim', 'run', …); null = follow the real movement mode.
+   */
+  forcedAnim: null as null | string,
+  /** True once the character model has loaded (screenshots wait for it). */
+  characterLoaded: false,
+  /** Current character animation state and lift (debug/tests). */
+  anim: { state: 'idle', lift: 0 },
   /** Set by the Player component; moves the player instantly (tests, shots). */
   teleport: null as null | ((x: number, z: number, yaw?: number) => void),
   /** Set by the Player component; only used by tests. */

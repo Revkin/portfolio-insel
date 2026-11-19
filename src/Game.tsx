@@ -9,11 +9,11 @@ import { PathLights } from './world/PathLights.tsx';
 import { Bridge } from './world/Bridge.tsx';
 import { Landmarks } from './world/Landmarks.tsx';
 import { Player } from './player/Player.tsx';
-import { cameraRig, playerState, yawFromDirection } from './player/playerState.ts';
+import { cameraRig, forwardFromYaw, playerState, yawFromDirection } from './player/playerState.ts';
 import { initCameraInput } from './player/cameraInput.ts';
 import { Portals } from './portals/Portals.tsx';
 import { computePortalPlacements } from './portals/placement.ts';
-import { CLIMB_ROCK, getTerrain, sampleHeight } from './world/terrain.ts';
+import { CLIMB_ROCK, getTerrain, sampleHeight, waterSurfaceAt } from './world/terrain.ts';
 import { useGame } from './systems/store.ts';
 import { isDebugMode, type ShotConfig } from './systems/shots.ts';
 
@@ -83,12 +83,38 @@ function CameraInput() {
   return null;
 }
 
-/** Signals readiness to the screenshot/smoke scripts after a few rendered frames. */
+/**
+ * Signals readiness to the screenshot/smoke scripts once the character model
+ * is loaded and a few more frames have rendered.
+ */
 function ReadySignal() {
   const frames = useRef(0);
   useFrame(() => {
+    if (!playerState.characterLoaded) return;
     frames.current += 1;
     if (frames.current === 20) window.__sceneReady = true;
+  });
+  return null;
+}
+
+/** Fixed screenshot camera in front of the player at spawn (character close-ups). */
+function FacePlayerCamera({
+  spawn,
+  view,
+}: {
+  spawn: { x: number; z: number; yaw: number };
+  view: NonNullable<ShotConfig['facePlayer']>;
+}) {
+  const camera = useThree((s) => s.camera);
+  useFrame(() => {
+    const f = forwardFromYaw(spawn.yaw);
+    const p = playerState.position;
+    camera.position.set(
+      p.x + f.x * view.front - f.z * view.right,
+      p.y + view.up,
+      p.z + f.z * view.front + f.x * view.right,
+    );
+    camera.lookAt(p.x, p.y + view.lookHeight, p.z);
   });
   return null;
 }
@@ -108,6 +134,16 @@ function DebugHooks() {
         stamina: playerState.stamina,
         exhausted: playerState.exhausted,
         time: playerState.time,
+        anim: playerState.anim.state,
+        lift: playerState.anim.lift,
+        speed: Math.hypot(playerState.velocity.x, playerState.velocity.z),
+        /** Height of the feet above ground or water. */
+        agl:
+          playerState.position.y -
+          Math.max(
+            sampleHeight(playerState.position.x, playerState.position.z),
+            waterSurfaceAt(playerState.position.x, playerState.position.z),
+          ),
       }),
       camera: () => ({
         effectiveDistance: cameraRig.effectiveDistance,
@@ -159,6 +195,7 @@ export function Game({ shot }: { shot: ShotConfig | null }) {
   useEffect(() => {
     if (shot?.pitch !== undefined) cameraRig.pitch = shot.pitch;
     if (shot?.distance !== undefined) cameraRig.distance = shot.distance;
+    playerState.forcedAnim = shot?.animState ?? null;
   }, [shot]);
 
   return (
@@ -179,7 +216,7 @@ export function Game({ shot }: { shot: ShotConfig | null }) {
           <Bridge />
           <Landmarks />
           <Portals />
-          <Player spawn={spawn} followCamera={!shot?.fixedCamera} />
+          <Player spawn={spawn} followCamera={!shot?.fixedCamera && !shot?.facePlayer} />
           <ReadySignal />
         </Physics>
       </Suspense>
@@ -187,6 +224,7 @@ export function Game({ shot }: { shot: ShotConfig | null }) {
       <PathLights />
 
       {shot?.fixedCamera && <FixedCamera {...shot.fixedCamera} />}
+      {shot?.facePlayer && <FacePlayerCamera spawn={spawn} view={shot.facePlayer} />}
       <CameraInput />
       <DebugHooks />
     </Canvas>

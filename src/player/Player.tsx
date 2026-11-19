@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   CapsuleCollider,
@@ -16,6 +16,7 @@ import { SEA_LEVEL } from '../world/layout.ts';
 import { cameraRig, forwardFromYaw, playerState } from './playerState.ts';
 import { CAPSULE_HALF_HEIGHT, CAPSULE_RADIUS, FOOT_OFFSET, Locomotion } from './locomotion.ts';
 import { Glider } from './Glider.tsx';
+import { Character } from './Character.tsx';
 
 const HEAD_HEIGHT = 1.55;
 const SHOULDER_OFFSET = 0.45;
@@ -111,6 +112,9 @@ export function Player({ spawn, followCamera }: PlayerProps) {
     playerState.stamina = l.stamina;
     playerState.exhausted = l.exhausted;
     playerState.time += dt;
+    playerState.velocity.copy(l.vel);
+    playerState.climbDistance = l.climbDistance;
+    playerState.mantleProgress = l.mantleProgress;
 
     // --- Visual: heading, swim pose, glider ---
     if (l.facing !== null) {
@@ -122,7 +126,7 @@ export function Player({ spawn, followCamera }: PlayerProps) {
       const lean = l.mode === 'swim' ? 1.25 : l.mode === 'glide' ? 0.25 : 0;
       capsule.current.rotation.x += (lean - capsule.current.rotation.x) * (1 - Math.exp(-8 * dt));
     }
-    if (glider.current) glider.current.visible = l.mode === 'glide';
+    if (glider.current) glider.current.visible = l.mode === 'glide' || playerState.forcedAnim === 'glide';
 
     // --- Third-person camera with collision ---
     if (!followCamera) return;
@@ -164,22 +168,31 @@ export function Player({ spawn, followCamera }: PlayerProps) {
     >
       <CapsuleCollider ref={collider} args={[CAPSULE_HALF_HEIGHT, CAPSULE_RADIUS]} />
       <group ref={visual}>
-        <group ref={capsule}>
-          <mesh castShadow>
-            <capsuleGeometry args={[CAPSULE_RADIUS, CAPSULE_HALF_HEIGHT * 2, 6, 16]} />
-            <meshStandardMaterial color="#3A3F4A" roughness={0.6} />
-          </mesh>
-          {/* Visor shows which way the capsule faces. */}
-          <mesh position={[0, 0.45, CAPSULE_RADIUS - 0.04]}>
-            <boxGeometry args={[0.4, 0.1, 0.12]} />
-            <meshStandardMaterial
-              color={PALETTE.neonCyan}
-              emissive={PALETTE.neonCyan}
-              emissiveIntensity={2}
-              toneMapped={false}
-            />
-          </mesh>
-        </group>
+        {/* The capsule is shown while the character model loads. */}
+        <Suspense
+          fallback={
+            <group ref={capsule}>
+              <mesh castShadow>
+                <capsuleGeometry args={[CAPSULE_RADIUS, CAPSULE_HALF_HEIGHT * 2, 6, 16]} />
+                <meshStandardMaterial color="#3A3F4A" roughness={0.6} />
+              </mesh>
+              {/* Visor shows which way the capsule faces. */}
+              <mesh position={[0, 0.45, CAPSULE_RADIUS - 0.04]}>
+                <boxGeometry args={[0.4, 0.1, 0.12]} />
+                <meshStandardMaterial
+                  color={PALETTE.neonCyan}
+                  emissive={PALETTE.neonCyan}
+                  emissiveIntensity={2}
+                  toneMapped={false}
+                />
+              </mesh>
+            </group>
+          }
+        >
+          <group position-y={-FOOT_OFFSET}>
+            <Character />
+          </group>
+        </Suspense>
         <group ref={glider} visible={false}>
           <Glider />
         </group>

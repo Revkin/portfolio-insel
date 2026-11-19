@@ -87,6 +87,8 @@ const UP = new Vector3(0, 1, 0);
 export class Locomotion {
   mode: MoveMode = 'ground';
   readonly vel = new Vector3();
+  /** Total distance moved along walls (drives the climbing animation cycle). */
+  climbDistance = 0;
   stamina = 1;
   exhausted = false;
   /** Heading of the visual (atan2(x, z)); null = keep. */
@@ -383,6 +385,7 @@ export class Locomotion {
     this.configure('climb');
     this.ctrl.computeColliderMovement(this.collider, d);
     const move = this.ctrl.computedMovement();
+    this.climbDistance += Math.hypot(move.x, move.y, move.z);
     center.set(center.x + move.x, center.y + move.y, center.z + move.z);
     this.safetyNet(center);
     this.body.setNextKinematicTranslation(center);
@@ -432,6 +435,10 @@ export class Locomotion {
     this.mode = 'mantle';
     this.vel.set(0, 0, 0);
     return true;
+  }
+
+  get mantleProgress(): number {
+    return this.mode === 'mantle' ? this.mantleT : 0;
   }
 
   private updateMantle(dt: number, center: Vector3): Vector3 {
