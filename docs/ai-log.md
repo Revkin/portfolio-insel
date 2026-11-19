@@ -88,3 +88,39 @@ Pro Session: was gebaut wurde, was gut lief, was schwierig war und wo Kevin eing
 
 **Kevin musste eingreifen**
 - Nichts in dieser Phase.
+
+**Kevins Feedback zu Phase 2**
+- „Alles funktioniert sehr gut.“
+
+---
+
+## 2026-11-19 – Phase 3: Charakter
+
+**Gebaut**
+- Die kostenlosen CC0-Pakete *Universal Base Characters* und *Universal Animation Library* von Quaternius über itch.io heruntergeladen (mit Kevins Freigabe). Sie liegen außerhalb des Repos, im Repo landen nur die erzeugten Dateien.
+- Build-Skript `npm run assets:character` (gltf-transform, sharp, meshoptimizer):
+  - **Figur:** Basisfigur plus Frisur. Die Kleidung (Jacke, Hose, Stiefel) wird per Bone-Gewichten erkannt und in die Textur gemalt: Jedes Dreieck wird in den UV-Raum gerastert, und die T-Pose-Position jedes Pixels steuert auch die Leuchtnähte als Emissive-Maske. Texturen sind 1024 px WebP, die Geometrie ist mit meshopt komprimiert. Ergebnis: 0,5 MB.
+  - **Animationen:** 9 von 43 Clips, nur Rotationen plus an die Figur angepasste Beckenposition. So bleiben die Proportionen der Figur erhalten. Ergebnis: 0,27 MB.
+- Charakter im Spiel:
+  - Weiches Überblenden zwischen Idle, Gehen, Joggen, Sprint, Sprung, Fallen, Landen, Schwimmen und Wassertreten. Das Abspieltempo richtet sich nach der Geschwindigkeit.
+  - Rucksack, Jackenkragen, Cargo-Taschen und Stiefel sind eigene Meshes an den Knochen. Die Haare sind dunkelbraun eingefärbt, der Kopf etwas vergrößert (wirkt jünger).
+- **Fehlende Animationen im Code** (Klettern, Hängepose am Gleiter, Hochziehen): Arme und Beine werden auf Zielrichtungen im Charakterraum ausgerichtet („aim“). Das funktioniert unabhängig von den Knochenachsen des Rigs. Der Kletterzyklus läuft mit der geklommenen Strecke mit.
+- **Schwimmen:** Die Swim-Clips sind auf unterschiedlichen Höhen animiert. Eine automatische Anhebung hält beim Schwimmen den Brustkorb und beim Wassertreten den Kopf an der Wasseroberfläche.
+- **Gleiter-Modell:** Deltaflügel mit Rahmen, Steuerbügel und Neon-Kanten (vorn Cyan, hinten Magenta).
+- **Neue Screenshots:**
+  - `char-*`: Nahaufnahmen mit erzwungenem Animationszustand.
+  - `npm run screenshots:action`: Aufnahmen aus der echten Spielkamera beim Klettern, Hochziehen, Gleiten, Schwimmen, Sprinten und Springen.
+
+**Gut gelaufen**
+- Das Skelett der Figur und das der Animationen sind identisch (65 Knochen). Die Clips passen direkt.
+- Die „Aim“-Posen funktionierten auf Anhieb ohne Wissen über Knochenachsen.
+- Die Screenshots aus der Spielkamera haben Fehler sofort sichtbar gemacht. Zum Beispiel lag der Schwimmer unsichtbar unter der Wasseroberfläche.
+
+**Schwierig**
+- Die kostenlose Standard-Version der Basisfiguren enthält nur die muskulösen „Superhero“-Proportionen. Die Teen-Figur, die besser zum Sheet passen würde, gibt es nur im kostenpflichtigen Source-Paket. Ausgleich: Kleidung, größerer Kopf, etwas kleinere Gesamtgröße, abgeschwächte Muskel-Normal-Map.
+- In der Character-glTF verweisen zwei Bild-Pfade auf nicht vorhandene Dateien (`*_png.png`). Der Lesecode fängt das ab.
+- gltf-transform: Nach dem Entfernen von 34 Animationen blieben deren Keyframe-Daten in der Datei, weil Sampler bei `Animation.dispose()` erhalten bleiben. Die Datei war dadurch 2,7 statt 0,27 MB groß. Jetzt werden Sampler und Kanäle ausdrücklich mit entfernt.
+- Gleiter-Tests waren zeitabhängig: Je nach Bildrate traf die Leertaste den Boden, also einen Sprung, statt die Luft. Eine zustandsbasierte Testhilfe drückt jetzt nur, wenn die Figur hoch genug in der Luft ist.
+
+**Kevin musste eingreifen**
+- Download der beiden Quaternius-Pakete freigeben.
