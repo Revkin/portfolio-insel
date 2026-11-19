@@ -23,6 +23,9 @@ export async function withPreviewPage(run: (page: Page, baseUrl: string) => Prom
       if (msg.type() === 'error') console.error(`  [browser] ${msg.text()}`);
     });
     page.on('pageerror', (err) => console.error(`  [pageerror] ${err.message}`));
+    page.on('response', (res) => {
+      if (res.status() >= 400) console.error(`  [http ${res.status()}] ${res.url()}`);
+    });
     await run(page, baseUrl);
   } finally {
     await browser.close();

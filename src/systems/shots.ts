@@ -13,6 +13,13 @@ export interface ShotConfig {
   player: 'spawn' | { portalIndex: number };
   pitch?: number;
   distance?: number;
+  /**
+   * Fixed camera relative to the player at spawn: metres in front, to the
+   * right and above the feet, looking at `lookHeight` above the feet.
+   */
+  facePlayer?: { front: number; right: number; up: number; lookHeight: number };
+  /** Force a character animation state (see Character.tsx). */
+  animState?: string;
   /** Open the overlay of the portal the player stands at. */
   openOverlay?: boolean;
 }
@@ -28,6 +35,13 @@ export const SHOTS = {
     fixedCamera: { position: [-38, 20, -2], target: [-74, 7, -26] },
     player: 'spawn',
   },
+  /** Character close-ups (Phase 3), compare with 06-character-sheet.png. */
+  'char-idle': { player: 'spawn', facePlayer: { front: 3, right: 0.9, up: 1.2, lookHeight: 0.95 }, animState: 'idle' },
+  'char-run': { player: 'spawn', facePlayer: { front: 3, right: 1.6, up: 1.1, lookHeight: 0.95 }, animState: 'jog' },
+  'char-climb': { player: 'spawn', facePlayer: { front: -2.6, right: 1.4, up: 1.4, lookHeight: 1.1 }, animState: 'climb' },
+  'char-glide': { player: 'spawn', facePlayer: { front: 3.6, right: 1.4, up: 1.0, lookHeight: 1.4 }, animState: 'glide' },
+  'char-swim': { player: 'spawn', facePlayer: { front: 3, right: 1.4, up: 1.3, lookHeight: 0.8 }, animState: 'swim' },
+  'char-back': { player: 'spawn', facePlayer: { front: -2.8, right: 0.8, up: 1.3, lookHeight: 1.0 }, animState: 'idle' },
   portal: { player: { portalIndex: 0 }, pitch: -0.18, distance: 6 },
   overlay: { player: { portalIndex: 0 }, pitch: -0.18, distance: 6, openOverlay: true },
 } satisfies Record<string, ShotConfig>;

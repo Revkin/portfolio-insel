@@ -9,6 +9,7 @@ import type { Page } from 'playwright';
 import {
   getPlayer,
   measureFps,
+  openGlider,
   speedBetween,
   teleport,
   waitForPlayer,
@@ -50,6 +51,8 @@ export async function runMovementTests(page: Page, check: Check) {
     p1 = await getPlayer(page);
     const sprintSpeed = speedBetween(p0, p1);
     check(sprintSpeed > walkSpeed * 1.4, 'Shift sprintet schneller als Gehen', `${walkSpeed.toFixed(1)} → ${sprintSpeed.toFixed(1)} m/s`);
+    check(p1.anim === 'sprint', 'Animation: Sprint', p1.anim);
+    check(walkSpeed > 3 && walkSpeed < 5.5, 'Gehtempo passt zur Jog-Animation', walkSpeed.toFixed(1));
     check(p1.stamina < 0.85, 'Sprinten verbraucht Ausdauer', `${(p1.stamina * 100).toFixed(0)} %`);
     check(
       (await page.getByTestId('stamina').getAttribute('data-visible')) === 'true',
@@ -83,6 +86,7 @@ export async function runMovementTests(page: Page, check: Check) {
     await waitSimSeconds(page, 1);
     const b = await getPlayer(page);
     check(Math.abs(b.y - a.y) < 0.3 && b.y > -1.6 && b.y < -0.6, 'Schwimmer treibt an der Oberfläche', `Füße y=${b.y.toFixed(2)}`);
+    check(b.anim === 'swim' && b.lift > 0.3, 'Animation: Schwimmen, Körper an die Oberfläche angehoben', `${b.anim}, Anhebung ${b.lift.toFixed(2)}`);
     const swimSpeed = speedBetween(a, b);
     check(swimSpeed > 1.5 && swimSpeed < 3.5, 'Schwimmen ist langsamer als Gehen', `${swimSpeed.toFixed(1)} m/s`);
 
@@ -119,6 +123,7 @@ export async function runMovementTests(page: Page, check: Check) {
     await keys.down(page, 'KeyW');
     const climbing = await waitForPlayer(page, "p.mode === 'climb'", 20000);
     check(climbing, 'Gegen Felswand laufen → Klettern startet');
+    check(await waitForPlayer(page, "p.anim === 'climb'", 2000), 'Animation: Kletterpose');
     const c0 = await getPlayer(page);
     await waitSimSeconds(page, 1);
     const c1 = await getPlayer(page);
@@ -188,11 +193,10 @@ export async function runMovementTests(page: Page, check: Check) {
     const topY = (await getPlayer(page)).y;
     await keys.down(page, 'KeyW');
     await waitForPlayer(page, `p.y < ${topY - 0.4} || p.x > ${rock.x + rock.radius - 1}`, 20000);
-    await page.keyboard.press('Space'); // jump (or coyote jump) off the edge
-    await waitSimSeconds(page, 0.35);
-    await page.keyboard.press('Space'); // open the glider
-    const gliding = await waitForPlayer(page, "p.mode === 'glide'", 3000);
+    // Jump off the edge and open the glider once high enough above the ground.
+    const gliding = await openGlider(page);
     check(gliding, 'Von der Kante springen, Leertaste in der Luft → Gleiter öffnet');
+    check(await waitForPlayer(page, "p.anim === 'glide'", 2000), 'Animation: Hängepose am Gleiter');
     const g0 = await getPlayer(page);
     await waitSimSeconds(page, 1.2);
     const g1 = await getPlayer(page);
@@ -211,13 +215,7 @@ export async function runMovementTests(page: Page, check: Check) {
     await teleport(page, rock.x + rock.radius - 4, rock.z, yawFor(1, 0));
     await keys.down(page, 'KeyW');
     await waitForPlayer(page, `p.y < ${topY - 0.4} || p.x > ${rock.x + rock.radius - 1}`, 20000);
-    await page.keyboard.press('Space');
-    let opened = false;
-    for (let i = 0; i < 4 && !opened; i++) {
-      await waitSimSeconds(page, 0.25);
-      await page.keyboard.press('Space');
-      opened = await waitForPlayer(page, "p.mode === 'glide'", 1000);
-    }
+    const opened = await openGlider(page);
     await waitSimSeconds(page, 0.3);
     await page.keyboard.press('Space');
     const closed = await waitForPlayer(page, "p.mode === 'air' || p.mode === 'ground'", 3000);

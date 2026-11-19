@@ -29,7 +29,9 @@ Begehbare 3D-Portfolio-Webseite von Kevin: eine Insel im Mix aus Fantasy-Open-Wo
 - `npm run typecheck` – `tsc --noEmit`
 - `npm run lint` – ESLint
 - `npm run screenshots` – Playwright-Skript, das Referenzansichten (Tag, Dämmerung, Nacht, Portal nah, Overlay offen, Startscreen) nach `docs/screenshots/` rendert
-- `npm run test:smoke` – Playwright-Smoke-Test des Builds (Laufen, Springen, ganzer Pfad, alle Portale, Overlay, DE/EN, Esc); vorher `npm run build`
+- `npm run screenshots:action` – Aufnahmen aus der Spielkamera beim Klettern, Hochziehen, Gleiten, Schwimmen, Sprinten, Springen
+- `npm run test:smoke` – Playwright-Smoke-Test des Builds (Welt, Portale, Overlay, DE/EN sowie alle Bewegungen und Animationszustände); vorher `npm run build`
+- `npm run assets:character` – baut `public/assets/models/character*.glb` aus den Quaternius-Paketen (liegen außerhalb des Repos in `../asset-downloads/extracted`, siehe `scripts/assets/source-files.ts`)
 
 ## Projektstruktur
 ```

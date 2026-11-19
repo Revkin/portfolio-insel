@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 import { waitForScene, webglRenderer, withPreviewPage } from './browser.ts';
 
 // Must match SHOTS in src/systems/shots.ts.
-const ALL_SHOTS = ['overview', 'gameplay', 'rock', 'portal', 'overlay'];
+const ALL_SHOTS = ['overview', 'gameplay', 'rock', 'char-idle', 'char-back', 'char-run', 'char-climb', 'char-glide', 'char-swim', 'portal', 'overlay'];
 const OUT_DIR = resolve('docs/screenshots');
 
 const requested = process.argv.slice(2);

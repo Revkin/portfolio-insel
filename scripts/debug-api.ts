@@ -13,6 +13,33 @@ export interface PlayerInfo {
   exhausted: boolean;
   /** Simulation time in seconds. */
   time: number;
+  /** Character animation state (see src/player/Character.tsx). */
+  anim: string;
+  lift: number;
+  speed: number;
+  /** Height of the feet above ground or water. */
+  agl: number;
+}
+
+/**
+ * Gets the player into the glider from wherever they are near an edge:
+ * jumps when on the ground, opens the glider once high enough in the air.
+ * Holds W the whole time. Returns true when gliding.
+ */
+export async function openGlider(page: Page, timeoutMs = 15000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const p = await getPlayer(page);
+    if (p.mode === 'glide') return true;
+    if (p.mode === 'swim') return false;
+    if (p.mode === 'ground' || (p.mode === 'air' && p.agl > 1.5)) {
+      await page.keyboard.press('Space');
+      await waitSimSeconds(page, 0.2);
+      continue;
+    }
+    await waitSimSeconds(page, 0.05);
+  }
+  return false;
 }
 
 /** Horizontal speed between two samples, in metres per *simulation* second. */
