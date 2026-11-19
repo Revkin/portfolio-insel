@@ -14,7 +14,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint .",
     "screenshots": "node scripts/screenshots.ts",
-    "test:smoke": "node scripts/smoke.ts"
+    "screenshots:action": "node scripts/action-shots.ts",
+    "test:smoke": "node scripts/smoke.ts",
+    "assets:character": "node scripts/assets/build-character.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.2",
@@ -32,6 +34,9 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -41,7 +46,9 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.7",
     "globals": "17.14.0",
+    "meshoptimizer": "1.3.0",
     "playwright": "1.64.1",
+    "sharp": "0.35.5",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
     "vite": "8.3.5"
