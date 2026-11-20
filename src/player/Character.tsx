@@ -43,10 +43,41 @@ type Clip =
   | 'Swim_Idle_Loop'
   | 'Swim_Fwd_Loop';
 
-/** Nominal ground speed of each locomotion clip (m/s) for playback-rate matching. */
+/**
+ * Shorter, quicker steps when jogging (Kevin's feedback): the jog clip's limb
+ * swing is scaled down to this fraction of the original around its average
+ * pose, and the playback rate goes up accordingly.
+ */
+const JOG_STRIDE = 0.75;
+/** Bones whose swing is scaled with the stride (legs, arms, hip and torso sway). */
+const STRIDE_BONES = [
+  'pelvis',
+  'spine_01',
+  'spine_02',
+  'spine_03',
+  'thigh_l',
+  'thigh_r',
+  'calf_l',
+  'calf_r',
+  'foot_l',
+  'foot_r',
+  'ball_l',
+  'ball_r',
+  'upperarm_l',
+  'upperarm_r',
+  'lowerarm_l',
+  'lowerarm_r',
+];
+
+/**
+ * Nominal ground speed of each locomotion clip (m/s) for playback-rate matching.
+ * The jog clip covers about 2.9 m/s at the character's scale (measured at the
+ * stance foot); scaled by JOG_STRIDE and with a little slip allowed, 4.5 m/s
+ * plays it about 1.75 times as fast.
+ */
 const CLIP_SPEED: Partial<Record<Clip, number>> = {
   Walk_Loop: 1.5,
-  Jog_Fwd_Loop: 4.2,
+  Jog_Fwd_Loop: 3.4 * JOG_STRIDE,
   Sprint_Loop: 7.2,
   Swim_Fwd_Loop: 2.6,
 };
@@ -149,6 +180,40 @@ interface Rig {
   bones: Map<string, Object3D>;
   mixer: AnimationMixer;
   actions: Map<Clip, AnimationAction>;
+  /** Average jog pose per stride bone (local rotation and height). */
+  jogMean: { bone: Object3D; rotation: Quaternion; y: number }[];
+}
+
+/** Samples a looping clip and averages the local pose of the given bones. */
+function averagePose(mixer: AnimationMixer, action: AnimationAction, bones: Object3D[]): Rig['jogMean'] {
+  const sums = bones.map(() => ({ q: [0, 0, 0, 0], y: 0, ref: null as Quaternion | null }));
+  const samples = 32;
+  action.reset().play();
+  for (let i = 0; i < samples; i++) {
+    action.time = (action.getClip().duration * i) / samples;
+    mixer.update(0);
+    bones.forEach((bone, j) => {
+      const s = sums[j]!;
+      const q = bone.quaternion;
+      s.ref ??= q.clone();
+      // q and -q are the same rotation: keep all samples in one hemisphere.
+      const sign = s.ref.dot(q) < 0 ? -1 : 1;
+      s.q[0]! += q.x * sign;
+      s.q[1]! += q.y * sign;
+      s.q[2]! += q.z * sign;
+      s.q[3]! += q.w * sign;
+      s.y += bone.position.y;
+    });
+  }
+  action.stop();
+  return bones.map((bone, j) => {
+    const s = sums[j]!;
+    return {
+      bone,
+      rotation: new Quaternion(s.q[0], s.q[1], s.q[2], s.q[3]).normalize(),
+      y: s.y / samples,
+    };
+  });
 }
 
 function buildRig(model: GLTF, anims: GLTF): Rig {
@@ -201,7 +266,26 @@ function buildRig(model: GLTF, anims: GLTF): Rig {
       a.clampWhenFinished = true;
     }
   }
-  return { scene, bones, mixer, actions };
+  const jog = actions.get('Jog_Fwd_Loop');
+  const strideBones = STRIDE_BONES.map((n) => bones.get(n)).filter((b): b is Object3D => !!b);
+  const jogMean = jog ? averagePose(mixer, jog, strideBones) : [];
+  return { scene, bones, mixer, actions, jogMean };
+}
+
+const strideTmp = new Quaternion();
+
+/**
+ * Pulls the jog swing towards its average pose: smaller steps. `weight` is the
+ * jog clip's current blend weight, so cross-fades to other clips stay smooth.
+ */
+function shortenStride(rig: Rig, weight: number) {
+  const keep = 1 - (1 - JOG_STRIDE) * weight;
+  if (keep > 0.999) return;
+  for (const { bone, rotation, y } of rig.jogMean) {
+    strideTmp.copy(bone.quaternion);
+    bone.quaternion.copy(rotation).slerp(strideTmp, keep);
+    if (bone.name === 'pelvis') bone.position.y = y + (bone.position.y - y) * keep;
+  }
 }
 
 type AnimState = 'idle' | 'walk' | 'jog' | 'sprint' | 'jump' | 'fall' | 'land' | 'swim' | 'swimIdle' | 'glide' | 'climb' | 'mantle';
@@ -312,9 +396,18 @@ export function Character() {
     if (a.action) {
       const clip = a.action.getClip().name as Clip;
       const nominal = CLIP_SPEED[clip];
-      a.action.timeScale = nominal && !forced ? Math.min(1.8, Math.max(0.6, hSpeed / nominal)) : next === 'jump' ? 1.6 : 1;
+      a.action.timeScale =
+        nominal && !forced
+          ? Math.min(clip === 'Jog_Fwd_Loop' ? 2.4 : 1.8, Math.max(0.6, hSpeed / nominal))
+          : next === 'jump'
+            ? 1.6
+            : forced && clip === 'Jog_Fwd_Loop'
+              ? 1.75
+              : 1;
     }
     rig.mixer.update(dt);
+    const jog = rig.actions.get('Jog_Fwd_Loop');
+    if (jog?.isRunning()) shortenStride(rig, jog.getEffectiveWeight());
 
     if (lift.current && outer.current) {
       // Swim clips are authored at different heights: lift the model so that the

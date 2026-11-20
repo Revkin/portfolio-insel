@@ -124,3 +124,8 @@ Pro Session: was gebaut wurde, was gut lief, was schwierig war und wo Kevin eing
 
 **Kevin musste eingreifen**
 - Download der beiden Quaternius-Pakete freigeben.
+
+### Nachtrag: Feedback zu Phase 3
+- Kevin fand die Schritte beim normalen Laufen zu groß und wünschte sich lieber zwei kleine statt einem großen.
+- Messung im Browser: Der Jog-Clip legt am Standbein etwa 2,9 m/s zurück. Der alte Wert im Code war 4,2 m/s, der Clip lief also zu langsam für das Tempo von 4,5 m/s. Pro Schritt rückte die Figur fast 2 m vor.
+- Lösung: Der Beinausschlag (Beine, Arme, Hüfte, Oberkörper) wird beim Joggen auf 75 % um die mittlere Pose verkleinert, und der Clip läuft etwa 1,75-mal so schnell. Das ergibt rund 1,2 m pro Schritt bei deutlich höherer Schrittfrequenz. Sprint und Gehen bleiben unverändert.
