@@ -127,13 +127,17 @@ void main() {
   vec3 water = mix(uShallow, uDeep, smoothstep(0.3, 6.0, depth));
   // Diffuse light in the water body.
   water *= 0.65 + 0.45 * max(uSunDir.y, 0.0);
+#if defined(CREEK)
+  vec3 col = mix(water, sky, fresnel * 0.4) + uSunColor * spec * 0.15;
+#else
   vec3 col = mix(water, sky, fresnel * 0.85) + uSunColor * spec;
+#endif
 
   // Foam: along the shore (sea) or the banks and in fast water (creek).
 #if defined(CREEK)
   float bank = max(smoothstep(0.16, 0.0, vUv.x), smoothstep(0.84, 1.0, vUv.x));
   float foamNoise = vnoise(vec2(vUv.x * 9.0, vUv.y * 1.2 - t * 2.0));
-  float foam = bank * smoothstep(0.35, 0.7, foamNoise) + smoothstep(0.8, 0.95, foamNoise) * 0.35;
+  float foam = bank * smoothstep(0.45, 0.75, foamNoise) * 0.8 + smoothstep(0.85, 0.97, foamNoise) * 0.15;
 #else
   float shore = smoothstep(0.9, 0.0, depth);
   float bands = sin(depth * 9.0 - t * 1.6 + vnoise(p * 0.6) * 5.0) * 0.5 + 0.5;
@@ -173,7 +177,7 @@ export function createWaterMaterial(kind: WaterKind): ShaderMaterial {
       uSunColor: { value: SUN_COLOR },
       uZenith: { value: SKY.zenith },
       uHorizon: { value: SKY.horizon },
-      uShallow: { value: new Color(kind === 'sea' ? '#3FA9A6' : '#4C9C94') },
+      uShallow: { value: new Color(kind === 'sea' ? '#3FA9A6' : '#2F6F68') },
       uDeep: { value: new Color('#0E3A50') },
     },
     vertexShader: VERTEX,
