@@ -34,7 +34,7 @@ const MATERIALS: Record<string, { id: string; size: number }> = {
 
 /** Props and their triangle budget per mesh. */
 const PROPS: Record<string, { id: string; maxTris: number; texSize: number; error?: number }> = {
-  rocks: { id: 'rock_moss_set_01', maxTris: 1400, texSize: 1024 },
+  rocks: { id: 'rock_moss_set_01', maxTris: 2000, texSize: 1024, error: 0.05 },
   barrel: { id: 'Barrel_01', maxTris: 1400, texSize: 512 },
   crate: { id: 'wooden_crate_01', maxTris: 1200, texSize: 512 },
   lantern: { id: 'Lantern_01', maxTris: 2400, texSize: 512 },
@@ -94,7 +94,7 @@ async function buildProps() {
       for (const prim of mesh.listPrimitives()) {
         const tris = (prim.getIndices()?.getCount() ?? 0) / 3;
         if (tris > maxTris) {
-          simplifyPrimitive(prim, { simplifier: MeshoptSimplifier, ratio: maxTris / tris, error, lockBorder: false });
+          simplifyPrimitive(prim, { simplifier: MeshoptSimplifier, ratio: maxTris / tris, error, lockBorder: true });
         }
       }
     }

@@ -171,7 +171,7 @@ function buildChunks(uniforms: Record<string, { value: unknown }>): Chunk[] {
         const r = random();
         const density = sampleGrid(surface.grass, x, z);
         if (r > density) continue;
-        if (!isFree(x, z, { path: 0.15 })) continue;
+        if (!isFree(x, z, { path: 0.15, ignoreOpen: true })) continue;
         const y = sampleHeight(x, z);
         // Taller grass in clumps and away from the path.
         const clump = fbm(x * 0.12 + 7, z * 0.12 - 3, 2);

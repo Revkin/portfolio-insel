@@ -41,6 +41,18 @@ function keepOutZones(): Zone[] {
   return list;
 }
 
+/**
+ * Open ground kept free of trees and rocks: the meadow east of the path, the
+ * approaches to the climbing rock (east and south, also the glide line) and
+ * the beach at the start. The movement smoke tests run there as well.
+ */
+const OPEN_AREAS = [
+  { minX: 8, maxX: 80, minZ: 19, maxZ: 31 },
+  { minX: -68, maxX: -36, minZ: -33, maxZ: -19 },
+  { minX: -81, maxX: -67, minZ: -22, maxZ: -4 },
+  { minX: -16, maxX: 22, minZ: 44, maxZ: 80 },
+];
+
 export interface FreeOptions {
   /** Minimum distance from the path edge. */
   path?: number;
@@ -50,6 +62,8 @@ export interface FreeOptions {
   margin?: number;
   /** Keep the climbing mesa (walls and top) clear. */
   mesa?: boolean;
+  /** Allow the open areas (for grass). */
+  ignoreOpen?: boolean;
 }
 
 /** True if (x, z) is free for scattering under the given clearances. */
@@ -61,6 +75,9 @@ export function isFree(x: number, z: number, opts: FreeOptions = {}): boolean {
   const cd = sampleGrid(t.creekDist, x, z);
   if (opts.creek !== undefined && cd < opts.creek) return false;
   if (opts.mesa && Math.hypot(x - CLIMB_ROCK.x, (z - CLIMB_ROCK.z) * 1.15) < CLIMB_ROCK.radius + 4) return false;
+  for (const a of opts.ignoreOpen ? [] : OPEN_AREAS) {
+    if (x > a.minX && x < a.maxX && z > a.minZ && z < a.maxZ) return false;
+  }
   const m = opts.margin ?? 0;
   for (const zn of keepOutZones()) {
     if (Math.hypot(x - zn.x, z - zn.z) < zn.r + m) return false;

@@ -7,6 +7,7 @@ import { Terrain } from './world/Terrain.tsx';
 import { Water } from './world/Water.tsx';
 import { Grass } from './world/Grass.tsx';
 import { Trees } from './world/Trees.tsx';
+import { Rocks } from './world/Rocks.tsx';
 import { PathLights } from './world/PathLights.tsx';
 import { Bridge } from './world/Bridge.tsx';
 import { Landmarks } from './world/Landmarks.tsx';
@@ -218,6 +219,7 @@ export function Game({ shot }: { shot: ShotConfig | null }) {
           <Bridge />
           <Landmarks />
           <Trees />
+          <Rocks />
           <Portals />
           <Player spawn={spawn} followCamera={!shot?.fixedCamera && !shot?.facePlayer} />
           <ReadySignal />
