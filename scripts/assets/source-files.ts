@@ -14,6 +14,8 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
 
 export const SOURCE_DIR = resolve(process.env.ASSET_SOURCE_DIR ?? '../asset-downloads/extracted');
+/** Poly Haven downloads (CC0), see download-polyhaven.ts. */
+export const POLYHAVEN_DIR = resolve(process.env.POLYHAVEN_DIR ?? '../asset-downloads/polyhaven');
 
 export const SOURCES = {
   animations: join(SOURCE_DIR, 'Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb'),
