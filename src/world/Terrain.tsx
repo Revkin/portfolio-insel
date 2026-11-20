@@ -2,18 +2,22 @@ import { useMemo } from 'react';
 import { BufferAttribute, BufferGeometry, Color } from 'three';
 import { RigidBody, TrimeshCollider } from '@react-three/rapier';
 import { GRID, getTerrain } from './terrain.ts';
+import { getSurface } from './surface.ts';
 import { fbm, smoothstep } from './math.ts';
-import { PALETTE } from '../content/palette.ts';
+import { createTerrainMaterial } from './terrainMaterial.ts';
+import { useTextureArray } from './textures.ts';
 
-const GRASS = new Color(PALETTE.grassDay);
-const GRASS_DARK = new Color('#4F6B2A');
-const SAND = new Color('#CDBB8A');
-const SEABED = new Color('#6B6A55');
-/** Deep sea floor blends into the water colour so the grid edge is invisible. */
-const DEEP = new Color('#123E50');
-const ROCK = new Color('#6F6A63');
-const PATH = new Color(PALETTE.pathStone);
-const CREEK_BED = new Color('#4A5546');
+/*
+ * Vertex colours only tint the textured ground: large-scale variation in the
+ * grass, wet sand at the waterline and a blue-green cast under water.
+ */
+/** The grass ground texture is olive; pull it towards the colour of the blades. */
+const TINT_GRASS = new Color('#7E9A55');
+const TINT_LUSH = new Color('#5F8A3C');
+const TINT_DRY = new Color('#D8C890');
+const WET = new Color('#9A9080');
+const UNDERWATER = new Color('#5E8C88');
+const DEEP = new Color('#173F4D');
 
 function buildGeometry() {
   const t = getTerrain();
@@ -51,42 +55,43 @@ function buildGeometry() {
   geometry.setIndex(new BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
 
-  const normals = geometry.getAttribute('normal');
+  const surface = getSurface();
   const colors = new Float32Array(nx * nz * 3);
   const c = new Color();
   for (let i = 0; i < nx * nz; i++) {
     const x = positions[i * 3]!;
     const z = positions[i * 3 + 2]!;
     const h = heights[i]!;
-    const slope = 1 - normals.getY(i);
-
-    c.copy(GRASS).lerp(GRASS_DARK, fbm(x * 0.06, z * 0.06, 3));
-    c.lerp(SAND, smoothstep(1.6, 0.6, h));
-    c.lerp(SEABED, smoothstep(-0.2, -2, h));
-    c.lerp(DEEP, smoothstep(-2.5, -6, h));
-    c.lerp(ROCK, smoothstep(0.25, 0.45, slope));
-    c.lerp(CREEK_BED, t.creekMask[i]! * 0.85);
-    c.lerp(PATH, t.pathMask[i]!);
-
+    c.setRGB(1, 1, 1);
+    // Patches of lusher and drier grass (only visible where grass ground shows).
+    const grassGround = 1 - surface.splat[i * 4]! - surface.splat[i * 4 + 1]! - surface.splat[i * 4 + 2]! - surface.splat[i * 4 + 3]!;
+    c.lerp(TINT_GRASS, grassGround * 0.9);
+    c.lerp(TINT_LUSH, grassGround * smoothstep(0.35, 0.7, fbm(x * 0.05, z * 0.05, 3)) * 0.8);
+    c.lerp(TINT_DRY, grassGround * smoothstep(0.55, 0.8, fbm(x * 0.04 + 9, z * 0.04 - 3, 3)) * 0.6);
+    c.lerp(WET, smoothstep(0.9, 0.2, h) * 0.7);
+    c.lerp(UNDERWATER, smoothstep(0.1, -1.2, h));
+    c.lerp(DEEP, smoothstep(-2, -6, h));
     colors[i * 3] = c.r;
     colors[i * 3 + 1] = c.g;
     colors[i * 3 + 2] = c.b;
   }
   geometry.setAttribute('color', new BufferAttribute(colors, 3));
+  geometry.setAttribute('splat', new BufferAttribute(surface.splat, 4));
 
   return { geometry, positions, indices };
 }
 
 export function Terrain() {
   const { geometry, positions, indices } = useMemo(() => buildGeometry(), []);
+  const albedo = useTextureArray('terrain-albedo', true);
+  const normal = useTextureArray('terrain-normal', false);
+  const material = useMemo(() => createTerrainMaterial(albedo, normal), [albedo, normal]);
 
   return (
     // Steep terrain is climbable (the slope check happens in the player's locomotion).
     <RigidBody type="fixed" colliders={false} userData={{ climbable: true }}>
       <TrimeshCollider args={[positions, indices]} />
-      <mesh geometry={geometry} receiveShadow castShadow>
-        <meshStandardMaterial vertexColors roughness={0.95} metalness={0} />
-      </mesh>
+      <mesh geometry={geometry} material={material} receiveShadow castShadow />
     </RigidBody>
   );
 }

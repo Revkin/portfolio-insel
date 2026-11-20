@@ -1,19 +1,23 @@
 import { useMemo } from 'react';
-import { DoubleSide } from 'three';
+import { useFrame } from '@react-three/fiber';
 import { CREEK_HALF_WIDTH, SEA_LEVEL } from './layout.ts';
 import { getTerrain } from './terrain.ts';
 import { buildRibbon } from './ribbon.ts';
+import { createWaterMaterial } from './waterMaterial.ts';
 
-/** Graybox water: flat sea, creek surface strip and a simple waterfall sheet. */
+/**
+ * Sea with depth colour and shore foam, the flowing creek and the waterfall
+ * over the west cliff (all shader-based, no textures).
+ */
 export function Water() {
-  const { creekGeometry, fall } = useMemo(() => {
+  const { creekGeometry, fall, materials } = useMemo(() => {
     const t = getTerrain();
     const creekGeometry = buildRibbon(
       t.creek.xs,
       t.creek.zs,
       0,
       t.creekEnd,
-      CREEK_HALF_WIDTH * 0.9,
+      CREEK_HALF_WIDTH * 0.95,
       (i) => t.creekWater[i]!,
     );
     const end = t.creekEnd;
@@ -25,8 +29,18 @@ export function Water() {
     return {
       creekGeometry,
       fall: { x: ex, z: ez, top, angle: Math.atan2(ex - px, ez - pz) },
+      materials: {
+        sea: createWaterMaterial('sea'),
+        creek: createWaterMaterial('creek'),
+        fall: createWaterMaterial('fall'),
+      },
     };
   }, []);
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime;
+    for (const m of Object.values(materials)) m.uniforms.uTime!.value = time;
+  });
 
   const fallHeight = fall.top - SEA_LEVEL;
 
@@ -35,22 +49,25 @@ export function Water() {
       {/* Uniform deep sea floor beyond the terrain grid. */}
       <mesh rotation-x={-Math.PI / 2} position-y={-7.1}>
         <planeGeometry args={[3000, 3000]} />
-        <meshStandardMaterial color="#123E50" roughness={1} />
+        <meshStandardMaterial color="#0F3442" roughness={1} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={SEA_LEVEL}>
+      <mesh rotation-x={-Math.PI / 2} position-y={SEA_LEVEL} material={materials.sea} receiveShadow={false}>
         <planeGeometry args={[3000, 3000]} />
-        <meshStandardMaterial color="#1F5F7A" transparent opacity={0.9} roughness={0.25} metalness={0.1} />
       </mesh>
 
-      <mesh geometry={creekGeometry} position-y={0.02}>
-        <meshStandardMaterial color="#3A8FB0" transparent opacity={0.8} roughness={0.2} side={DoubleSide} />
-      </mesh>
+      <mesh geometry={creekGeometry} position-y={0.02} material={materials.creek} />
 
       {fallHeight > 0.5 && (
-        <mesh position={[fall.x, SEA_LEVEL + fallHeight / 2, fall.z]} rotation-y={fall.angle}>
-          <planeGeometry args={[CREEK_HALF_WIDTH * 1.6, fallHeight]} />
-          <meshStandardMaterial color="#BFE6F2" transparent opacity={0.7} side={DoubleSide} />
-        </mesh>
+        <group position={[fall.x, 0, fall.z]} rotation-y={fall.angle}>
+          {/* Sheet bending over the cliff edge, then falling straight down. */}
+          <mesh position-y={SEA_LEVEL + fallHeight / 2} position-z={0.6} material={materials.fall}>
+            <planeGeometry args={[CREEK_HALF_WIDTH * 1.7, fallHeight, 1, 1]} />
+          </mesh>
+          {/* Foam pool where the water hits the sea. */}
+          <mesh rotation-x={-Math.PI / 2} position={[0, SEA_LEVEL + 0.05, 1.2]} material={materials.creek}>
+            <circleGeometry args={[3.2, 24]} />
+          </mesh>
+        </group>
       )}
     </group>
   );

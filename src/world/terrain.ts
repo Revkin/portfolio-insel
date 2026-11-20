@@ -19,6 +19,8 @@ import { clamp, fbm, lerp, makePolyline, nearestOnPolyline, sampleArray, smooths
 export const GRID = { minX: -130, maxX: 130, minZ: -105, maxZ: 105, step: 1 } as const;
 /** Distance from the creek centre line at which carving the bed starts. */
 const CREEK_CARVE_WIDTH = CREEK_HALF_WIDTH + 4;
+/** Distances to path and creek are stored up to this value (metres). */
+export const DIST_CAP = 12;
 const NX = Math.round((GRID.maxX - GRID.minX) / GRID.step) + 1;
 const NZ = Math.round((GRID.maxZ - GRID.minZ) / GRID.step) + 1;
 
@@ -63,6 +65,10 @@ export interface TerrainData {
   pathMask: Float32Array;
   /** 0..1 per vertex: creek bed. */
   creekMask: Float32Array;
+  /** Distance of each vertex to the path centre line (capped at DIST_CAP). */
+  pathDist: Float32Array;
+  /** Distance of each vertex to the creek centre line (capped at DIST_CAP). */
+  creekDist: Float32Array;
   path: Polyline;
   pathHeights: Float32Array;
   creek: Polyline;
@@ -137,6 +143,8 @@ function build(): TerrainData {
   const heights = new Float32Array(NX * NZ);
   const pathMask = new Float32Array(NX * NZ);
   const creekMask = new Float32Array(NX * NZ);
+  const pathDist = new Float32Array(NX * NZ).fill(DIST_CAP);
+  const creekDist = new Float32Array(NX * NZ).fill(DIST_CAP);
 
   const pathEnd = pathSamples[pathSamples.length - 1]!;
   const pathEndHeight = pathHeights[pathHeights.length - 1]!;
@@ -148,7 +156,8 @@ function build(): TerrainData {
       let h = baseHeight(x, z);
 
       // Flatten along the path.
-      const onPath = nearestOnPolyline(path, x, z, PATH_HALF_WIDTH + 6);
+      const onPath = nearestOnPolyline(path, x, z, DIST_CAP);
+      pathDist[iz * NX + ix] = Math.min(onPath.dist, DIST_CAP);
       if (onPath.dist < PATH_HALF_WIDTH + 6) {
         const ph = sampleArray(pathHeights, onPath.index);
         h = lerp(ph, h, smoothstep(PATH_HALF_WIDTH + 0.5, PATH_HALF_WIDTH + 6, onPath.dist));
@@ -162,7 +171,8 @@ function build(): TerrainData {
       if (de < 8) h = lerp(pathEndHeight, h, smoothstep(4, 8, de));
 
       // Carve the creek bed (only ever lowers the ground).
-      const onCreek = nearestOnPolyline(creek, x, z, CREEK_CARVE_WIDTH);
+      const onCreek = nearestOnPolyline(creek, x, z, DIST_CAP);
+      if (onCreek.index <= creekEnd + 2) creekDist[iz * NX + ix] = Math.min(onCreek.dist, DIST_CAP);
       if (onCreek.dist < CREEK_CARVE_WIDTH && onCreek.index <= creekEnd + 2) {
         const bed = sampleArray(creekWater, onCreek.index) - 0.7;
         const carved = lerp(bed, h, smoothstep(CREEK_HALF_WIDTH * 0.6, CREEK_CARVE_WIDTH, onCreek.dist));
@@ -174,7 +184,7 @@ function build(): TerrainData {
     }
   }
 
-  return { nx: NX, nz: NZ, heights, pathMask, creekMask, path, pathHeights, creek, creekWater, creekEnd, bridge };
+  return { nx: NX, nz: NZ, heights, pathMask, creekMask, pathDist, creekDist, path, pathHeights, creek, creekWater, creekEnd, bridge };
 }
 
 let cached: TerrainData | null = null;

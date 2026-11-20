@@ -5,9 +5,13 @@ import { Object3D, type DirectionalLight } from 'three';
 import { PROJECTS } from './content/projects.ts';
 import { Terrain } from './world/Terrain.tsx';
 import { Water } from './world/Water.tsx';
+import { Grass } from './world/Grass.tsx';
+import { Trees } from './world/Trees.tsx';
 import { PathLights } from './world/PathLights.tsx';
 import { Bridge } from './world/Bridge.tsx';
 import { Landmarks } from './world/Landmarks.tsx';
+import { Sky } from './world/Sky.tsx';
+import { FOG, SUN_COLOR, SUN_DIRECTION } from './world/sky.ts';
 import { Player } from './player/Player.tsx';
 import { cameraRig, forwardFromYaw, playerState, yawFromDirection } from './player/playerState.ts';
 import { initCameraInput } from './player/cameraInput.ts';
@@ -16,8 +20,6 @@ import { computePortalPlacements } from './portals/placement.ts';
 import { CLIMB_ROCK, getTerrain, sampleHeight, waterSurfaceAt } from './world/terrain.ts';
 import { useGame } from './systems/store.ts';
 import { isDebugMode, type ShotConfig } from './systems/shots.ts';
-
-const SKY = '#A9CBE3';
 
 function resolveSpawn(shot: ShotConfig | null): { x: number; z: number; yaw: number } {
   const { xs, zs } = getTerrain().path;
@@ -42,7 +44,7 @@ function Sun() {
   const target = useMemo(() => new Object3D(), []);
   useFrame(() => {
     const p = playerState.position;
-    light.current?.position.set(p.x + 40, p.y + 70, p.z + 30);
+    light.current?.position.set(p.x + SUN_DIRECTION.x * 100, p.y + SUN_DIRECTION.y * 100, p.z + SUN_DIRECTION.z * 100);
     target.position.copy(p);
   });
   return (
@@ -51,8 +53,8 @@ function Sun() {
       <directionalLight
         ref={light}
         target={target}
-        intensity={2.2}
-        color="#FFF1DA"
+        intensity={2.6}
+        color={SUN_COLOR}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
@@ -205,22 +207,24 @@ export function Game({ shot }: { shot: ShotConfig | null }) {
       camera={{ fov: 55, near: 0.1, far: 2500, position: [spawn.x, 10, spawn.z + 10] }}
       gl={{ antialias: true, preserveDrawingBuffer: shot !== null }}
     >
-      <color attach="background" args={[SKY]} />
-      <fog attach="fog" args={[SKY, 150, 850]} />
-      <hemisphereLight args={['#CFE6FF', '#6A7A52', 1.6]} />
+      <fog attach="fog" args={[FOG.color, FOG.near, FOG.far]} />
+      <hemisphereLight args={['#CFE0F0', '#5E6A48', 0.5]} />
       <Sun />
+      <Sky />
 
       <Suspense fallback={null}>
         <Physics gravity={[0, -20, 0]}>
           <Terrain />
           <Bridge />
           <Landmarks />
+          <Trees />
           <Portals />
           <Player spawn={spawn} followCamera={!shot?.fixedCamera && !shot?.facePlayer} />
           <ReadySignal />
         </Physics>
       </Suspense>
       <Water />
+      <Grass />
       <PathLights />
 
       {shot?.fixedCamera && <FixedCamera {...shot.fixedCamera} />}
