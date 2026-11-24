@@ -9,12 +9,12 @@ export const SUN_DIRECTION = new Vector3(0.5, 0.36, -0.79).normalize();
 export const SUN_COLOR = new Color('#FFE2B8');
 
 export const SKY = {
-  zenith: new Color('#5B8FC4'),
-  horizon: new Color('#D7E2E3'),
+  zenith: new Color('#5E94CA'),
+  horizon: new Color('#E2DFD2'),
   /** Warm glow around the sun. */
-  glow: new Color('#FFE6BE'),
+  glow: new Color('#FFDDA6'),
   /** Below the horizon (seen through haze over the sea). */
-  ground: new Color('#9FB7BD'),
+  ground: new Color('#A7B9BA'),
 };
 
 /** Haze colour: the horizon colour, so distant objects melt into the sky. */

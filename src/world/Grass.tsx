@@ -200,7 +200,7 @@ function buildChunks(uniforms: Record<string, { value: unknown }>): Chunk[] {
 }
 
 const ROOT = new Color('#1E3210');
-const TIP = new Color('#7E9C38');
+const TIP = new Color('#7A9E34');
 const DRY = new Color('#B5A750');
 
 /**
