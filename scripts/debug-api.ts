@@ -27,9 +27,11 @@ export interface PlayerInfo {
  * Holds W the whole time. Returns true when gliding.
  */
 export async function openGlider(page: Page, timeoutMs = 15000): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
+  // Deadline in simulation time (slow software rendering must not matter).
+  const deadline = (await getPlayer(page)).time + timeoutMs / 1000;
+  for (;;) {
     const p = await getPlayer(page);
+    if (p.time > deadline) break;
     if (p.mode === 'glide') return true;
     if (p.mode === 'swim') return false;
     if (p.mode === 'ground' || (p.mode === 'air' && p.agl > 1.5)) {
@@ -104,20 +106,27 @@ export async function measureFps(page: Page, ms = 1000): Promise<number> {
   );
 }
 
+/**
+ * Waits until the predicate (an expression over `p`, the player info) holds.
+ * `timeout` counts simulation time in ms, so slow software rendering does not
+ * make checks fail; wall-clock time is capped at 25 × the timeout.
+ */
 export async function waitForPlayer(
   page: Page,
   predicate: string,
   timeout: number,
 ): Promise<boolean> {
+  const limit = (await getPlayer(page)).time + timeout / 1000;
   return page
     .waitForFunction(
-      (body) => {
+      ([body, lim]) => {
         const p = (window as DebugWindow).__debug!.player();
-        return new Function('p', `return (${body});`)(p) as boolean;
+        if (new Function('p', `return (${body});`)(p) as boolean) return 'ok';
+        return p.time > (lim as number) ? 'timeout' : false;
       },
-      predicate,
-      { timeout, polling: 50 },
+      [predicate, limit] as const,
+      { timeout: timeout * 25, polling: 50 },
     )
-    .then(() => true)
+    .then(async (h) => (await h.jsonValue()) === 'ok')
     .catch(() => false);
 }

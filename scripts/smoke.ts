@@ -8,7 +8,7 @@
  */
 import type { Page } from 'playwright';
 import { waitForScene, withPreviewPage } from './browser.ts';
-import type { DebugWindow } from './debug-api.ts';
+import { waitSimSeconds, type DebugWindow } from './debug-api.ts';
 import { runMovementTests } from './movement-tests.ts';
 
 const only = process.argv[2];
@@ -55,17 +55,18 @@ await withPreviewPage(async (page, baseUrl) => {
   // --- Walking ---
   const start = await player(page);
   check(start.grounded, 'Spieler steht nach dem Laden auf dem Boden', `y=${start.y.toFixed(2)}`);
+  // Durations in simulation time: the test browser may render slowly.
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(2500);
+  await waitSimSeconds(page, 2.5, 120000);
   await page.keyboard.up('KeyW');
-  await page.waitForTimeout(300);
+  await waitSimSeconds(page, 0.3, 60000);
   const walked = await player(page);
   const dist = Math.hypot(walked.x - start.x, walked.z - start.z);
   check(dist > 4, 'W bewegt den Spieler vorwärts', `${dist.toFixed(1)} m`);
   check(walked.grounded && walked.y > -0.5, 'Spieler bleibt auf dem Gelände', `y=${walked.y.toFixed(2)}`);
 
   await page.keyboard.down('KeyD');
-  await page.waitForTimeout(800);
+  await waitSimSeconds(page, 0.8, 60000);
   await page.keyboard.up('KeyD');
   const strafed = await player(page);
   check(Math.hypot(strafed.x - walked.x, strafed.z - walked.z) > 1, 'D bewegt seitlich');
@@ -73,10 +74,10 @@ await withPreviewPage(async (page, baseUrl) => {
   // --- Jump ---
   const beforeJump = await player(page);
   await page.keyboard.press('Space');
-  await page.waitForTimeout(250);
+  await waitSimSeconds(page, 0.25, 60000);
   const inAir = await player(page);
   check(inAir.y > beforeJump.y + 0.5, 'Leertaste springt', `+${(inAir.y - beforeJump.y).toFixed(2)} m`);
-  await page.waitForTimeout(1200);
+  await waitSimSeconds(page, 1.2, 60000);
   check((await player(page)).grounded, 'Landet wieder auf dem Boden');
 
   // --- Walk the whole path: beach → bridge → house ---
@@ -84,17 +85,18 @@ await withPreviewPage(async (page, baseUrl) => {
     const points = await page.evaluate(() => (window as DebugWindow).__debug!.pathPoints());
     const first = points[0]!;
     await page.evaluate((p) => (window as DebugWindow).__debug!.teleport(p.x, p.z), first);
-    await page.waitForTimeout(500);
+    await waitSimSeconds(page, 0.5, 60000);
     let reached = 0;
     let stuckAt: string | null = null;
     let minY = Infinity;
     await page.keyboard.down('KeyW');
     for (let k = 1; k < points.length; k++) {
       const target = points[k]!;
-      const deadline = Date.now() + 8000;
+      const deadline = (await player(page)).time + 8;
       let ok = false;
-      while (Date.now() < deadline) {
+      for (;;) {
         const p = await player(page);
+        if (p.time > deadline) break;
         minY = Math.min(minY, p.y);
         const dx = target.x - p.x;
         const dz = target.z - p.z;
