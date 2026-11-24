@@ -60,3 +60,6 @@ export const CREEK_SAMPLES = 400;
 /** Evenly spaced samples along the path (x, z only; y = 0). */
 export const pathSamples = curve(PATH_POINTS).getSpacedPoints(PATH_SAMPLES - 1);
 export const creekSamples = curve(CREEK_POINTS).getSpacedPoints(CREEK_SAMPLES - 1);
+
+/** Dock on the east coast (SPEC 4.1): starts on the shore, runs out to sea along +x. */
+export const DOCK = { x: 67.3, z: 36, yaw: 0.08, length: 11, deck: 1.15 } as const;

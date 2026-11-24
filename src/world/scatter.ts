@@ -1,6 +1,6 @@
 import { PROJECTS } from '../content/projects.ts';
 import { computePortalPlacements } from '../portals/placement.ts';
-import { HOUSE_POSITION, PATH_HALF_WIDTH, WINDMILL_POSITION } from './layout.ts';
+import { DOCK, HOUSE_POSITION, PATH_HALF_WIDTH, WINDMILL_POSITION } from './layout.ts';
 import { CLIMB_ROCK, DIST_CAP, getTerrain } from './terrain.ts';
 import { sampleGrid } from './surface.ts';
 
@@ -32,6 +32,8 @@ function keepOutZones(): Zone[] {
     { x: HOUSE_POSITION.x, z: HOUSE_POSITION.z, r: 8 },
     { x: WINDMILL_POSITION.x, z: WINDMILL_POSITION.z, r: 4.5 },
     { x: t.bridge.x, z: t.bridge.z, r: t.bridge.length / 2 + 1 },
+    { x: DOCK.x, z: DOCK.z, r: 4 },
+    { x: DOCK.x + 6, z: DOCK.z + 2, r: 4 },
   ];
   for (const p of computePortalPlacements(PROJECTS.length)) {
     list.push({ x: p.x, z: p.z, r: 2.6 });
