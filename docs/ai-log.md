@@ -129,3 +129,43 @@ Pro Session: was gebaut wurde, was gut lief, was schwierig war und wo Kevin eing
 - Kevin fand die Schritte beim normalen Laufen zu groß und wünschte sich lieber zwei kleine statt einem großen.
 - Messung im Browser: Der Jog-Clip legt am Standbein etwa 2,9 m/s zurück. Der alte Wert im Code war 4,2 m/s, der Clip lief also zu langsam für das Tempo von 4,5 m/s. Pro Schritt rückte die Figur fast 2 m vor.
 - Lösung: Der Beinausschlag (Beine, Arme, Hüfte, Oberkörper) wird beim Joggen auf 75 % um die mittlere Pose verkleinert, und der Clip läuft etwa 1,75-mal so schnell. Das ergibt rund 1,2 m pro Schritt bei deutlich höherer Schrittfrequenz. Sprint und Gehen bleiben unverändert.
+
+---
+
+## 2026-11-20 bis 2026-11-24 – Phase 4: Welt bei Tag
+
+**Gebaut**
+- **Assets:** Poly-Haven-Texturen und -Modelle (CC0) per Skript geladen, mit Kevins Freigabe: `npm run assets:download-world`. Sie werden verkleinert und als WebP bzw. meshopt-GLB ins Repo übernommen: `npm run assets:world`.
+- **Gelände:**
+  - Fünf Bodentexturen (Gras, Sand, Fels, Erde, Kopfstein) liegen als Textur-Array vor. Ein Splat-Shader mischt sie nach Regeln: Fels nach Steigung, Sand nach Höhe, Kopfstein und Erde am Pfad, Kiesbett im Bach.
+  - Fels wird triplanar aufgetragen, damit Steilwände nicht verzerren. Die Übergänge sind höhenabhängig geblendet.
+- **Himmel:** prozeduraler Verlauf mit Sonnenglühen. Derselbe Himmel dient als Umgebungslicht (IBL). Der lineare Dunst hat die Horizontfarbe, dadurch versinken Meer und Skyline in der Ferne.
+- **Wasser:**
+  - Ein Shader mit Wellen-Normalen, Fresnel, Sonnenglanz und Uferschaum. Die Wassertiefe kommt aus einer Tiefentextur des Geländes.
+  - Der Bach ist ein eigenes Band mit Fließrichtung, dazu ein Wasserfall mit Schaumbecken.
+- **Vegetation:**
+  - Gras in 12-m-Kacheln, instanziert. Es wiegt im Wind und weicht vor der Figur aus. In der Ferne wird es ausgedünnt.
+  - Bäume, Nadelbäume und Büsche sind im Code gebaut und instanziert. Sie bewegen sich leicht im Wind, Stämme haben Kollision.
+  - Felsen von Poly Haven stehen an Küste, Kletterfels, Bach und Pfad.
+- **Bauwerke, alle im Code** (Hilfsfunktionen in `src/world/build.ts`):
+  - Brücke aus einzelnen Planken.
+  - Zäune abschnittsweise mit Holzlatten oder durchhängenden Kabeln, Laternenmasten mit Poly-Haven-Laterne.
+  - Haus: Steinsockel, Bretterwände, Ziegeldach, warme Fenster, drei Neonschilder ohne Text, Antennen, Satellitenschüssel, Kabel, Kisten, Fässer und Rauch aus dem Schornstein.
+  - Windmühle: achteckiger Turm, vier Gitterflügel mit Segeltuch und Neon-Kanten.
+  - Steg an der Ostküste mit schaukelndem Ruderboot.
+  - Skyline: gestufte Hochhäuser mit Antennen, die Fensterraster entstehen im Shader.
+- **Werkzeug:** `npm run look` macht einen Screenshot aus der Spielkamera an jeder beliebigen Stelle. Das war beim Bauen das wichtigste Kontrollmittel.
+
+**Gut gelaufen**
+- Die Bauwerke aus wenigen Hilfsfunktionen funktionierten gut: Box mit maßstabstreuen UVs, Balken von A nach B, Kettenlinie für Kabel und Zusammenfügen pro Material. Jedes Gebäude kostet so nur eine Handvoll Draw Calls.
+- Freiflächen für die Bewegungstests sind fest reserviert, deshalb stellt die Vegetation die Teststrecken nicht zu.
+
+**Schwierig**
+- Die Bäume von Poly Haven haben 0,3–4,6 Mio. Polygone, der Fels `boulder_01` ließ sich nicht sinnvoll vereinfachen. Bäume und Büsche sind deshalb prozedural.
+- **Felsen sahen wie Scherben aus.** Ursache: meshopt speichert Positionen als Ganzzahlen, beim Einrechnen der Transformation wurde gerundet. Jetzt wird vorher in Float umgewandelt und mit festem Rand vereinfacht.
+- **Schwarzes Gelände:** Die Bildgröße wurde nach `bitmap.close()` gelesen und war dadurch 0.
+- **Testbrowser ohne Grafikkarte:** In der VM schafft die fertige Welt nur noch 1–5 fps, vor allem wegen des Grases. Einige ältere Tests maßen in echter Zeit und schlugen deshalb fehl. Jetzt zählen alle Wartezeiten und Zeitlimits in Spielzeit, und alle 57 Prüfungen laufen wieder durch. Die echte Bildrate muss Kevin auf seinem PC prüfen.
+
+**Kevin musste eingreifen**
+- Download der Poly-Haven-Dateien freigeben.
+- Zweimal pausiert und wieder gestartet.

@@ -17,3 +17,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Ad-hoc views from npm run look
+docs/screenshots/look*.png

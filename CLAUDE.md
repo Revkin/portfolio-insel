@@ -32,6 +32,9 @@ Begehbare 3D-Portfolio-Webseite von Kevin: eine Insel im Mix aus Fantasy-Open-Wo
 - `npm run screenshots:action` – Aufnahmen aus der Spielkamera beim Klettern, Hochziehen, Gleiten, Schwimmen, Sprinten, Springen
 - `npm run test:smoke` – Playwright-Smoke-Test des Builds (Welt, Portale, Overlay, DE/EN sowie alle Bewegungen und Animationszustände); vorher `npm run build`
 - `npm run assets:character` – baut `public/assets/models/character*.glb` aus den Quaternius-Paketen (liegen außerhalb des Repos in `../asset-downloads/extracted`, siehe `scripts/assets/source-files.ts`)
+- `npm run assets:download-world` – lädt die Poly-Haven-Texturen und -Modelle (CC0) nach `../asset-downloads/polyhaven`
+- `npm run assets:world` – baut daraus `public/assets/textures/*.webp` und `public/assets/models/world/*.glb`
+- `npm run look -- <x> <z> <dirX> <dirZ> [pitch] [distance] [out.png]` – Screenshot aus der Spielkamera an beliebiger Stelle (nach `npm run build`)
 
 ## Projektstruktur
 ```

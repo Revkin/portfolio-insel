@@ -16,7 +16,10 @@
     "screenshots": "node scripts/screenshots.ts",
     "screenshots:action": "node scripts/action-shots.ts",
     "test:smoke": "node scripts/smoke.ts",
-    "assets:character": "node scripts/assets/build-character.ts"
+    "assets:character": "node scripts/assets/build-character.ts",
+    "assets:download-world": "node scripts/assets/download-polyhaven.ts",
+    "assets:world": "node scripts/assets/build-world-assets.ts",
+    "look": "node scripts/look.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.2",
