@@ -10,6 +10,7 @@ import { Trees } from './world/Trees.tsx';
 import { Rocks } from './world/Rocks.tsx';
 import { PathLights } from './world/PathLights.tsx';
 import { Bridge } from './world/Bridge.tsx';
+import { Fences } from './world/Fences.tsx';
 import { Landmarks } from './world/Landmarks.tsx';
 import { Sky } from './world/Sky.tsx';
 import { FOG, SUN_COLOR, SUN_DIRECTION } from './world/sky.ts';
@@ -217,6 +218,7 @@ export function Game({ shot }: { shot: ShotConfig | null }) {
         <Physics gravity={[0, -20, 0]}>
           <Terrain />
           <Bridge />
+          <Fences />
           <Landmarks />
           <Trees />
           <Rocks />

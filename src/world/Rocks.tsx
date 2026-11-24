@@ -1,57 +1,18 @@
 import { useMemo } from 'react';
 import { useLoader } from '@react-three/fiber';
 import { ConvexHullCollider, RigidBody } from '@react-three/rapier';
-import { BufferAttribute, BufferGeometry, Euler, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3, type Mesh, type Object3D } from 'three';
+import { Euler, Matrix4, Quaternion, Vector3, type BufferGeometry } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { configureLoader, extractMeshes, instancesOf, propUrl } from './props.ts';
 import { CLIMB_ROCK, GRID, getTerrain, sampleHeight } from './terrain.ts';
 import { getSurface, sampleGrid } from './surface.ts';
 import { PATH_HALF_WIDTH } from './layout.ts';
 import { isFree, rng } from './scatter.ts';
 
-export const ROCKS_URL = `${import.meta.env.BASE_URL}assets/models/world/rocks.glb`;
-
-const configureLoader = (loader: GLTFLoader) => {
-  loader.setMeshoptDecoder(MeshoptDecoder);
-};
-
 interface RockPlacement {
   shape: number;
   matrix: Matrix4;
   collide: boolean;
-}
-
-/** Rock set meshes, centred on x/z (bottom left as authored, partly sunk). */
-function extractShapes(scene: Object3D) {
-  scene.updateMatrixWorld(true);
-  const shapes: { geometry: BufferGeometry; material: MeshStandardMaterial }[] = [];
-  scene.traverse((o) => {
-    const m = o as Mesh;
-    if (!m.isMesh) return;
-    // meshopt stores quantized integer attributes: convert to float before
-    // baking the node transform in, or every vertex gets rounded.
-    const g = new BufferGeometry();
-    for (const [name, attr] of Object.entries(m.geometry.attributes)) {
-      const a = attr as BufferAttribute;
-      const out = new Float32Array(a.count * a.itemSize);
-      for (let i = 0; i < a.count; i++) {
-        for (let k = 0; k < a.itemSize; k++) out[i * a.itemSize + k] = a.getComponent(i, k);
-      }
-      g.setAttribute(name, new BufferAttribute(out, a.itemSize));
-    }
-    g.setIndex(m.geometry.index);
-    g.applyMatrix4(m.matrixWorld);
-    g.computeBoundingBox();
-    const c = new Vector3();
-    g.boundingBox!.getCenter(c);
-    g.translate(-c.x, 0, -c.z);
-    g.computeBoundingSphere();
-    // Slightly cooler, greyer tint so the rocks sit with the terrain's rock layer.
-    const material = (m.material as MeshStandardMaterial).clone();
-    material.color.set('#A9B0A0');
-    shapes.push({ geometry: g, material });
-  });
-  return shapes;
 }
 
 function place(shapeCount: number): RockPlacement[] {
@@ -142,20 +103,15 @@ function hullPoints(geometry: BufferGeometry, matrix: Matrix4): Float32Array {
 
 /** Mossy rocks (Poly Haven, CC0) scattered by rules, instanced per shape. */
 export function Rocks() {
-  const gltf = useLoader(GLTFLoader, ROCKS_URL, configureLoader);
+  const gltf = useLoader(GLTFLoader, propUrl('rocks'), configureLoader);
   const { meshes, hulls } = useMemo(() => {
-    const shapes = extractShapes(gltf.scene);
+    const shapes = extractMeshes(gltf.scene, true);
+    // Slightly cooler, greyer tint so the rocks sit with the terrain's rock layer.
+    for (const s of shapes) s.material.color.set('#A9B0A0');
     const placements = place(shapes.length);
-    const meshes = shapes.map((shape, i) => {
-      const list = placements.filter((p) => p.shape === i);
-      const mesh = new InstancedMesh(shape.geometry, shape.material, Math.max(list.length, 1));
-      mesh.count = list.length;
-      list.forEach((p, k) => mesh.setMatrixAt(k, p.matrix));
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.computeBoundingSphere();
-      return mesh;
-    });
+    const meshes = shapes.flatMap((shape, i) =>
+      instancesOf([shape], placements.filter((p) => p.shape === i).map((p) => p.matrix)),
+    );
     const hulls = placements.filter((p) => p.collide).map((p) => hullPoints(shapes[p.shape]!.geometry, p.matrix));
     return { meshes, hulls };
   }, [gltf]);
@@ -173,5 +129,3 @@ export function Rocks() {
     </group>
   );
 }
-
-useLoader.preload(GLTFLoader, ROCKS_URL, configureLoader);
